@@ -3,7 +3,8 @@
 // ==========================================
 const supabaseUrl = 'https://iewlbhuiqdqzusfwvpko.supabase.co';
 const supabaseKey = 'sb_publishable_wQ0q5sibdsdaBpt9H-FZGg_61cWYPrQ'; 
-const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+// Renombrado a clienteSupabase para evitar choque con la librería global
+const clienteSupabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
 // ==========================================
 // ESTADO DE LA APLICACIÓN
@@ -11,7 +12,7 @@ const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 let currentUser = null; 
 let userRole = 'client'; 
 let activeBooking = null; 
-let isRescheduling = false; // Bandera para saber si estamos reagendando
+let isRescheduling = false; 
 
 const basePrice = 250;
 const workHours = ['10:00', '11:00', '12:00', '13:00', '14:00', '16:00', '17:00', '18:00', '19:00'];
@@ -36,12 +37,12 @@ document.getElementById('btn-register').addEventListener('click', async () => {
     const password = document.getElementById('password').value;
     if(!email || !password) return alert("Ingresa correo y contraseña.");
 
-    const { data, error } = await supabase.auth.signUp({ email, password });
+    const { data, error } = await clienteSupabase.auth.signUp({ email, password });
     if (error) return alert("Error: " + error.message);
 
     if (data.user) {
         const rol_asignado = email.includes('master') ? 'master' : 'client';
-        await supabase.from('usuarios').insert([{ id: data.user.id, email: email, rol: rol_asignado }]);
+        await clienteSupabase.from('usuarios').insert([{ id: data.user.id, email: email, rol: rol_asignado }]);
         alert("Usuario creado. Ahora dale a Iniciar Sesión.");
     }
 });
@@ -51,12 +52,12 @@ document.getElementById('btn-login').addEventListener('click', async () => {
     const password = document.getElementById('password').value;
     if(!email || !password) return alert("Ingresa correo y contraseña.");
 
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await clienteSupabase.auth.signInWithPassword({ email, password });
     if (error) return alert("Error al iniciar sesión.");
 
     if (data.user) {
         currentUser = data.user;
-        const { data: userData } = await supabase.from('usuarios').select('rol').eq('id', currentUser.id).single();
+        const { data: userData } = await clienteSupabase.from('usuarios').select('rol').eq('id', currentUser.id).single();
         userRole = userData?.rol || 'client';
         
         if (userRole === 'master') {
@@ -75,7 +76,7 @@ document.getElementById('btn-login').addEventListener('click', async () => {
 });
 
 document.getElementById('btn-logout').addEventListener('click', async () => {
-    await supabase.auth.signOut();
+    await clienteSupabase.auth.signOut();
     currentUser = null; activeBooking = null;
     document.getElementById('nav-actions').classList.add('hidden');
     switchView('auth-section');
@@ -85,12 +86,12 @@ document.getElementById('btn-logout').addEventListener('click', async () => {
 // LÓGICA DE CLIENTE: CITAS
 // ==========================================
 async function checkUserBooking() {
-    const { data, error } = await supabase
+    const { data, error } = await clienteSupabase
         .from('citas')
         .select('*')
         .eq('user_id', currentUser.id)
         .eq('estado', 'activa')
-        .maybeSingle(); // Trae 1 o ninguna
+        .maybeSingle(); 
 
     activeBooking = data || null;
     isRescheduling = false;
@@ -119,8 +120,7 @@ async function renderTimeSlots(date) {
     const container = document.getElementById('time-slots');
     container.innerHTML = 'Cargando...';
 
-    // Buscar qué horas están ocupadas ese día
-    const { data: citasOcupadas } = await supabase
+    const { data: citasOcupadas } = await clienteSupabase
         .from('citas')
         .select('hora')
         .eq('fecha', date)
@@ -152,14 +152,12 @@ async function handleBooking(date, time) {
     if (!confirm(`¿Seguro que deseas ${accion} para el ${date} a las ${time}?`)) return;
 
     if (isRescheduling) {
-        // Actualizar cita existente sumando 1 a cambios
-        await supabase.from('citas')
+        await clienteSupabase.from('citas')
             .update({ fecha: date, hora: time, cambios_realizados: 1 })
             .eq('id', activeBooking.id);
         alert("Cita reagendada con éxito.");
     } else {
-        // Crear cita nueva
-        await supabase.from('citas')
+        await clienteSupabase.from('citas')
             .insert([{ user_id: currentUser.id, fecha: date, hora: time }]);
         alert("Cita agendada con éxito.");
     }
@@ -174,7 +172,7 @@ document.getElementById('booking-date').addEventListener('change', (e) => {
 
 document.getElementById('btn-cancel').addEventListener('click', async () => {
     if(confirm("¿Seguro que deseas cancelar tu cita? Esta acción es definitiva.")) {
-        await supabase.from('citas').update({ estado: 'cancelada' }).eq('id', activeBooking.id);
+        await clienteSupabase.from('citas').update({ estado: 'cancelada' }).eq('id', activeBooking.id);
         await checkUserBooking();
         await renderTimeSlots(document.getElementById('booking-date').value);
     }
@@ -189,8 +187,7 @@ document.getElementById('btn-reschedule').addEventListener('click', () => {
 // LÓGICA DEL MASTER (POS)
 // ==========================================
 async function loadAdminData(date) {
-    // Traer citas del día junto con el email del usuario
-    const { data: citas } = await supabase
+    const { data: citas } = await clienteSupabase
         .from('citas')
         .select(`id, hora, estado, usuarios(email)`)
         .eq('fecha', date)
@@ -228,14 +225,11 @@ document.getElementById('btn-charge').addEventListener('click', async () => {
     
     const total = document.getElementById('pos-total').textContent;
     
-    // 1. Guardar transacción
-    await supabase.from('transacciones').insert([{ cita_id: parseInt(citaId), monto: parseFloat(total) }]);
-    // 2. Marcar cita como completada
-    await supabase.from('citas').update({ estado: 'completada' }).eq('id', citaId);
+    await clienteSupabase.from('transacciones').insert([{ cita_id: parseInt(citaId), monto: parseFloat(total) }]);
+    await clienteSupabase.from('citas').update({ estado: 'completada' }).eq('id', citaId);
     
     alert(`Cobro de $${total} registrado con éxito.`);
     
-    // Limpiar POS
     document.getElementById('extra-pomada').checked = false;
     document.getElementById('extra-aceite').checked = false;
     updatePOS();
