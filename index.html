@@ -17,6 +17,7 @@
     </nav>
 
     <main class="container">
+        <!-- SECCIÓN DE AUTENTICACIÓN -->
         <section id="auth-section" class="view-section active">
             <div class="card metal-border">
                 <h2>Ingresar al Culto</h2>
@@ -29,6 +30,7 @@
             </div>
         </section>
 
+        <!-- SECCIÓN CLIENTE -->
         <section id="client-section" class="view-section hidden">
             <div class="promotions-grid">
                 <div class="promo-card metal-border">
@@ -55,21 +57,47 @@
                 </div>
             </div>
 
+            <!-- NUEVO: Calendario de Agendamiento Visual y Tipo de Corte -->
             <div class="calendar-container card mt-4">
                 <h3>Agenda tu Turno</h3>
-                <input type="date" id="booking-date" class="input-dark mb-2">
-                <div id="time-slots" class="slots-grid">
+                
+                <div class="service-selection mb-2 mt-2">
+                    <label class="text-muted">Selecciona el Servicio:</label>
+                    <select id="tipo-corte" class="input-dark mt-2">
+                        <option value="Fade Clásico">Fade Clásico - $250</option>
+                        <option value="The Dark Fade Special">The Dark Fade Special - $300</option>
+                        <option value="Viking Trim (Corte + Barba)">Viking Trim (Corte + Barba) - $350</option>
+                        <option value="Freestyle / Diseño">Freestyle / Diseño - $400</option>
+                    </select>
+                </div>
+
+                <div class="custom-calendar metal-border mb-2">
+                    <div class="calendar-header">
+                        <button id="prev-month" class="btn-outline">◀</button>
+                        <h4 id="month-year-display" class="metal-text">Mes Año</h4>
+                        <button id="next-month" class="btn-outline">▶</button>
                     </div>
+                    <div class="calendar-days-header">
+                        <div>Do</div><div>Lu</div><div>Ma</div><div>Mi</div><div>Ju</div><div>Vi</div><div>Sa</div>
+                    </div>
+                    <div id="calendar-grid" class="calendar-grid"></div>
+                </div>
+
+                <h4 id="selected-date-text" class="mb-2" style="color: var(--accent-purple);">Horarios para: Hoy</h4>
+                <div id="time-slots" class="slots-grid">
+                    <!-- Los horarios se generan con JS -->
+                </div>
             </div>
         </section>
 
+        <!-- SECCIÓN MASTER -->
         <section id="admin-section" class="view-section hidden">
             <div class="admin-grid">
                 <div class="card metal-border">
                     <h2 class="metal-text">Master Calendar</h2>
                     <input type="date" id="admin-date" class="input-dark mb-2">
                     <div id="admin-appointments" class="appointments-list">
-                        </div>
+                    </div>
                 </div>
 
                 <div class="card metal-border pos-panel">
