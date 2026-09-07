@@ -3,7 +3,6 @@
 // ==========================================
 const supabaseUrl = 'https://iewlbhuiqdqzusfwvpko.supabase.co';
 const supabaseKey = 'sb_publishable_wQ0q5sibdsdaBpt9H-FZGg_61cWYPrQ'; 
-// Renombrado a clienteSupabase para evitar choque con la librería global
 const clienteSupabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
 // ==========================================
@@ -14,6 +13,12 @@ let userRole = 'client';
 let activeBooking = null; 
 let isRescheduling = false; 
 
+// Variables para el Calendario Visual
+let currentMonth = new Date().getMonth();
+let currentYear = new Date().getFullYear();
+let selectedDateStr = new Date().toISOString().split('T')[0];
+const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+
 const basePrice = 250;
 const workHours = ['10:00', '11:00', '12:00', '13:00', '14:00', '16:00', '17:00', '18:00', '19:00'];
 
@@ -23,10 +28,7 @@ const workHours = ['10:00', '11:00', '12:00', '13:00', '14:00', '16:00', '17:00'
 function switchView(viewId) {
     document.querySelectorAll('.view-section').forEach(sec => sec.classList.add('hidden'));
     document.getElementById(viewId).classList.remove('hidden');
-    
-    if (viewId !== 'auth-section') {
-        document.getElementById('nav-actions').classList.remove('hidden');
-    }
+    if (viewId !== 'auth-section') document.getElementById('nav-actions').classList.remove('hidden');
 }
 
 // ==========================================
@@ -67,10 +69,9 @@ document.getElementById('btn-login').addEventListener('click', async () => {
             loadAdminData(hoy);
         } else {
             switchView('client-section');
-            const hoy = new Date().toISOString().split('T')[0];
-            document.getElementById('booking-date').value = hoy;
             await checkUserBooking();
-            await renderTimeSlots(hoy);
+            buildCalendar(currentMonth, currentYear); // Inicia el calendario
+            renderTimeSlots(selectedDateStr);
         }
     }
 });
@@ -83,10 +84,71 @@ document.getElementById('btn-logout').addEventListener('click', async () => {
 });
 
 // ==========================================
+// MOTOR DEL CALENDARIO VISUAL
+// ==========================================
+function buildCalendar(month, year) {
+    const grid = document.getElementById('calendar-grid');
+    const display = document.getElementById('month-year-display');
+    grid.innerHTML = '';
+    display.textContent = `${monthNames[month]} ${year}`;
+
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    
+    // Configurar el "Hoy" eliminando las horas para poder comparar
+    const today = new Date();
+    today.setHours(0,0,0,0); 
+
+    // Celdas vacías antes del primer día del mes
+    for(let i = 0; i < firstDay; i++) {
+        const emptyDiv = document.createElement('div');
+        emptyDiv.className = 'cal-day empty';
+        grid.appendChild(emptyDiv);
+    }
+
+    // Días reales del mes
+    for(let i = 1; i <= daysInMonth; i++) {
+        const dayDiv = document.createElement('div');
+        dayDiv.className = 'cal-day';
+        dayDiv.textContent = i;
+
+        // Crear string YYYY-MM-DD
+        const cellDate = new Date(year, month, i);
+        const cellDateStr = cellDate.getFullYear() + "-" + String(cellDate.getMonth() + 1).padStart(2, '0') + "-" + String(cellDate.getDate()).padStart(2, '0');
+
+        if (cellDate < today) {
+            dayDiv.classList.add('past'); // Días pasados bloqueados
+        } else {
+            if(cellDateStr === selectedDateStr) dayDiv.classList.add('selected');
+
+            dayDiv.addEventListener('click', () => {
+                selectedDateStr = cellDateStr;
+                document.getElementById('selected-date-text').textContent = `Horarios para: ${cellDateStr}`;
+                buildCalendar(month, year); 
+                renderTimeSlots(selectedDateStr);
+            });
+        }
+        grid.appendChild(dayDiv);
+    }
+}
+
+document.getElementById('prev-month').addEventListener('click', () => {
+    currentMonth--;
+    if(currentMonth < 0) { currentMonth = 11; currentYear--; }
+    buildCalendar(currentMonth, currentYear);
+});
+
+document.getElementById('next-month').addEventListener('click', () => {
+    currentMonth++;
+    if(currentMonth > 11) { currentMonth = 0; currentYear++; }
+    buildCalendar(currentMonth, currentYear);
+});
+
+// ==========================================
 // LÓGICA DE CLIENTE: CITAS
 // ==========================================
 async function checkUserBooking() {
-    const { data, error } = await clienteSupabase
+    const { data } = await clienteSupabase
         .from('citas')
         .select('*')
         .eq('user_id', currentUser.id)
@@ -101,7 +163,8 @@ async function checkUserBooking() {
     const btnReschedule = document.getElementById('btn-reschedule');
 
     if (activeBooking) {
-        infoDiv.innerHTML = `<h4 style="color:var(--accent-purple)">Próximo corte: ${activeBooking.fecha} a las ${activeBooking.hora}</h4>
+        infoDiv.innerHTML = `<h4 style="color:var(--accent-purple)">Próximo servicio: ${activeBooking.tipo_corte || 'Corte'}</h4>
+                             <p class="text-main">${activeBooking.fecha} a las ${activeBooking.hora}</p>
                              <p class="text-muted">Cambios realizados: ${activeBooking.cambios_realizados}/1</p>`;
         actionsDiv.classList.remove('hidden');
         
@@ -118,7 +181,7 @@ async function checkUserBooking() {
 
 async function renderTimeSlots(date) {
     const container = document.getElementById('time-slots');
-    container.innerHTML = 'Cargando...';
+    container.innerHTML = 'Cargando horarios...';
 
     const { data: citasOcupadas } = await clienteSupabase
         .from('citas')
@@ -148,39 +211,37 @@ async function handleBooking(date, time) {
         return alert("Ya tienes una cita activa. Usa el botón de reagendar.");
     }
     
+    const tipoCorte = document.getElementById('tipo-corte').value;
     const accion = isRescheduling ? 'reagendar' : 'agendar';
-    if (!confirm(`¿Seguro que deseas ${accion} para el ${date} a las ${time}?`)) return;
+    
+    if (!confirm(`¿Seguro que deseas ${accion} el servicio "${tipoCorte}" para el ${date} a las ${time}?`)) return;
 
     if (isRescheduling) {
         await clienteSupabase.from('citas')
-            .update({ fecha: date, hora: time, cambios_realizados: 1 })
+            .update({ fecha: date, hora: time, tipo_corte: tipoCorte, cambios_realizados: 1 })
             .eq('id', activeBooking.id);
         alert("Cita reagendada con éxito.");
     } else {
         await clienteSupabase.from('citas')
-            .insert([{ user_id: currentUser.id, fecha: date, hora: time }]);
+            .insert([{ user_id: currentUser.id, fecha: date, hora: time, tipo_corte: tipoCorte }]);
         alert("Cita agendada con éxito.");
     }
     
     await checkUserBooking();
-    await renderTimeSlots(document.getElementById('booking-date').value);
+    await renderTimeSlots(selectedDateStr);
 }
-
-document.getElementById('booking-date').addEventListener('change', (e) => {
-    renderTimeSlots(e.target.value);
-});
 
 document.getElementById('btn-cancel').addEventListener('click', async () => {
     if(confirm("¿Seguro que deseas cancelar tu cita? Esta acción es definitiva.")) {
         await clienteSupabase.from('citas').update({ estado: 'cancelada' }).eq('id', activeBooking.id);
         await checkUserBooking();
-        await renderTimeSlots(document.getElementById('booking-date').value);
+        await renderTimeSlots(selectedDateStr);
     }
 });
 
 document.getElementById('btn-reschedule').addEventListener('click', () => {
     isRescheduling = true;
-    alert("Selecciona un nuevo horario en el calendario de abajo.");
+    alert("Selecciona una nueva fecha y horario en el calendario.");
 });
 
 // ==========================================
@@ -189,7 +250,7 @@ document.getElementById('btn-reschedule').addEventListener('click', () => {
 async function loadAdminData(date) {
     const { data: citas } = await clienteSupabase
         .from('citas')
-        .select(`id, hora, estado, usuarios(email)`)
+        .select(`id, hora, estado, tipo_corte, usuarios(email)`)
         .eq('fecha', date)
         .eq('estado', 'activa');
 
@@ -200,7 +261,8 @@ async function loadAdminData(date) {
         citas.forEach(cita => {
             const option = document.createElement('option');
             option.value = cita.id;
-            option.textContent = `${cita.hora} - ${cita.usuarios.email}`;
+            const servicio = cita.tipo_corte ? cita.tipo_corte : 'Clásico';
+            option.textContent = `${cita.hora} - ${cita.usuarios.email} (${servicio})`;
             select.appendChild(option);
         });
     }
