@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BVNGZ - The Edgiest Cuts</title>
+    <link href="https://fonts.googleapis.com/css2?family=Creepster&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <h1 class="brand-logo">BVNGZ</h1>
+        <div id="nav-actions" class="hidden">
+            <button id="btn-logout" class="btn btn-outline">Salir</button>
+        </div>
+    </nav>
+
+    <main class="container">
+        <section id="auth-section" class="view-section active">
+            <div class="card metal-border">
+                <h2>Ingresar al Culto</h2>
+                <input type="email" id="email" placeholder="Correo electrónico" class="input-dark">
+                <input type="password" id="password" placeholder="Contraseña" class="input-dark">
+                <div class="auth-buttons">
+                    <button id="btn-login" class="btn btn-primary">Iniciar Sesión</button>
+                    <button id="btn-register" class="btn btn-secondary">Registrarse</button>
+                </div>
+            </div>
+        </section>
+
+        <section id="client-section" class="view-section hidden">
+            <div class="promotions-grid">
+                <div class="promo-card metal-border">
+                    <h3>The Dark Fade Special</h3>
+                    <p>Fade al ras con perfilado agresivo. Incluye bebida.</p>
+                </div>
+                <div class="promo-card metal-border">
+                    <h3>Viking Trim Combo</h3>
+                    <p>Corte clásico + arreglo de barba con toalla caliente.</p>
+                </div>
+            </div>
+
+            <div class="booking-status card metal-border">
+                <h3>Mi Cita</h3>
+                <div id="current-booking-info">
+                    <p class="text-muted">No tienes citas activas.</p>
+                </div>
+                <div class="rules-text">
+                    <small>*Reglas: 1 cita activa a la vez. 1 reagenda permitida. Después, solo podrás cancelar.*</small>
+                </div>
+                <div id="booking-actions" class="hidden mt-2">
+                    <button id="btn-reschedule" class="btn btn-secondary">Reagendar</button>
+                    <button id="btn-cancel" class="btn btn-danger">Cancelar Cita</button>
+                </div>
+            </div>
+
+            <div class="calendar-container card mt-4">
+                <h3>Agenda tu Turno</h3>
+                <input type="date" id="booking-date" class="input-dark mb-2">
+                <div id="time-slots" class="slots-grid">
+                    </div>
+            </div>
+        </section>
+
+        <section id="admin-section" class="view-section hidden">
+            <div class="admin-grid">
+                <div class="card metal-border">
+                    <h2 class="metal-text">Master Calendar</h2>
+                    <input type="date" id="admin-date" class="input-dark mb-2">
+                    <div id="admin-appointments" class="appointments-list">
+                        </div>
+                </div>
+
+                <div class="card metal-border pos-panel">
+                    <h2 class="metal-text">Punto de Venta</h2>
+                    <select id="pos-client-select" class="input-dark mb-2">
+                        <option value="">Seleccionar cliente del día...</option>
+                    </select>
+                    <div class="pos-extras mb-2">
+                        <label><input type="checkbox" id="extra-pomada" value="150"> Pomada ($150)</label><br>
+                        <label><input type="checkbox" id="extra-aceite" value="100"> Aceite Barba ($100)</label>
+                    </div>
+                    <div class="total-display">
+                        Total: $<span id="pos-total">250</span>
+                    </div>
+                    <button id="btn-charge" class="btn btn-primary w-100 mt-2">Registrar Pago</button>
+                    <hr class="metal-hr">
+                    <h3>Transacciones de hoy</h3>
+                    <div id="transactions-list"></div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>

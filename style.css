@@ -1,0 +1,97 @@
+:root {
+    --bg-dark: #0a0a0a;
+    --bg-card: #151515;
+    --text-main: #f0f0f0;
+    --text-muted: #888888;
+    --accent-purple: #6b21a8;
+    --accent-purple-hover: #9333ea;
+    --danger: #dc2626;
+    --border-color: rgba(255, 255, 255, 0.1);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    font-family: 'Inter', sans-serif;
+    background-image: radial-gradient(circle at top, #1a1a2e 0%, var(--bg-dark) 40%);
+    min-height: 100vh;
+}
+
+/* Tipografía agresiva para títulos */
+.brand-logo, h2.metal-text {
+    font-family: 'Creepster', cursive;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    background: linear-gradient(180deg, #fff 0%, #888 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.brand-logo { font-size: 3rem; margin-left: 1rem; }
+
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 2rem;
+    border-bottom: 1px solid var(--border-color);
+    background-color: rgba(10, 10, 10, 0.9);
+}
+
+.container { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
+
+/* Utilidades */
+.hidden { display: none !important; }
+.active { display: block; }
+.mt-2 { margin-top: 1rem; }
+.mt-4 { margin-top: 2rem; }
+.mb-2 { margin-bottom: 1rem; }
+.w-100 { width: 100%; }
+
+/* Tarjetas y Bordes Estilo "Metal" */
+.card {
+    background-color: var(--bg-card);
+    padding: 1.5rem;
+    border-radius: 8px;
+}
+.metal-border {
+    border: 1px solid #333;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5), inset 0 0 10px rgba(107, 33, 168, 0.1);
+}
+.metal-hr { border: 0; height: 1px; background: #333; margin: 1rem 0; }
+
+/* Inputs y Botones */
+.input-dark {
+    width: 100%; padding: 0.8rem; margin-bottom: 1rem;
+    background: #000; border: 1px solid #333;
+    color: var(--text-main); border-radius: 4px;
+}
+.input-dark:focus { border-color: var(--accent-purple); outline: none; }
+
+.btn {
+    padding: 0.8rem 1.5rem; border: none; border-radius: 4px;
+    font-weight: 600; cursor: pointer; transition: all 0.3s ease;
+}
+.btn-primary { background-color: var(--accent-purple); color: white; }
+.btn-primary:hover { background-color: var(--accent-purple-hover); }
+.btn-secondary { background-color: #262626; color: white; border: 1px solid #404040; }
+.btn-secondary:hover { background-color: #404040; }
+.btn-danger { background-color: #450a0a; color: #fca5a5; border: 1px solid var(--danger); }
+.btn-danger:hover { background-color: var(--danger); color: white; }
+.btn-outline { background: transparent; border: 1px solid var(--border-color); color: white; }
+
+/* Grids */
+.promotions-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+.promo-card { border-left: 4px solid var(--accent-purple); }
+.admin-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 2rem; }
+
+/* Slots del Calendario */
+.slots-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 0.5rem; }
+.time-slot {
+    padding: 0.8rem; text-align: center; background: #1a1a1a;
+    border: 1px solid #333; border-radius: 4px; cursor: pointer;
+}
+.time-slot:hover { background: #262626; border-color: var(--accent-purple); }
+.time-slot.booked { background: #0a0a0a; color: #555; cursor: not-allowed; text-decoration: line-through; }
